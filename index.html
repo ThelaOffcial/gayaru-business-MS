@@ -12,10 +12,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #334155;
         }
 
         .container {
@@ -433,15 +434,171 @@
             font-size: 14px;
         }
 
+        .notification-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s;
+            cursor: pointer;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+            }
+
             .header {
                 flex-direction: column;
                 text-align: center;
                 gap: 15px;
+                padding: 20px 15px;
             }
-            
+
+            .header-left h1 {
+                font-size: 1.8em;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab {
+                padding: 15px 12px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-filter {
+                flex-direction: column;
+                max-width: 100%;
+            }
+
+            .search-box, .filter-select {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-card .value {
+                font-size: 28px;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .filter-row .form-group {
+                min-width: 100%;
+            }
+
             .sale-item-row {
                 grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            .modal-header h2 {
+                font-size: 1.3em;
+            }
+
+            .action-buttons {
+                flex-wrap: wrap;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+
+            .notification-badge {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            .chart-container {
+                padding: 15px;
+            }
+
+            .summary-card {
+                padding: 15px;
+            }
+
+            .summary-row {
+                font-size: 14px;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-left h1 {
+                font-size: 1.5em;
+            }
+
+            .header-left p {
+                font-size: 13px;
+            }
+
+            .stat-card h3 {
+                font-size: 12px;
+            }
+
+            .stat-card .value {
+                font-size: 24px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 6px;
             }
         }
     </style>
@@ -450,7 +607,7 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <h1>📊 Business Management</h1>
+                <h1>Business Management System</h1>
                 <p>Track Sales, Manage Inventory & Monitor Stock</p>
             </div>
             <div class="status-badge">
@@ -460,12 +617,12 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard')">📈 Dashboard</button>
-            <button class="tab" onclick="switchTab('sales')">💰 Sales</button>
-            <button class="tab" onclick="switchTab('inventory')">📦 Inventory</button>
-            <button class="tab" onclick="switchTab('daily-summary')">📅 Daily</button>
-            <button class="tab" onclick="switchTab('monthly-summary')">📆 Monthly</button>
-            <button class="tab" onclick="switchTab('reports')">📊 Reports</button>
+            <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="switchTab('sales')">Sales</button>
+            <button class="tab" onclick="switchTab('inventory')">Inventory</button>
+            <button class="tab" onclick="switchTab('daily-summary')">Daily</button>
+            <button class="tab" onclick="switchTab('monthly-summary')">Monthly</button>
+            <button class="tab" onclick="switchTab('reports')">Reports</button>
         </div>
 
         <div class="content">
@@ -474,29 +631,29 @@
                 <h2 style="margin-bottom: 20px;">Today's Overview</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3>💵 Total Revenue</h3>
+                        <h3>Total Revenue</h3>
                         <div class="value" id="dashTotal">Rs. 0</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <h3>🛒 Items Sold</h3>
+                        <h3>Items Sold</h3>
                         <div class="value" id="dashItemsSold">0</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <h3>📝 Transactions</h3>
+                        <h3>Transactions</h3>
                         <div class="value" id="dashTransactions">0</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                        <h3>💰 Average Sale</h3>
+                        <h3>Average Sale</h3>
                         <div class="value" id="dashAvgSale">Rs. 0</div>
                     </div>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                        <h3>📦 Total Items</h3>
+                        <h3>Total Items</h3>
                         <div class="value" id="totalItems">0</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">
-                        <h3>⚠️ Low Stock</h3>
+                        <h3>Low Stock</h3>
                         <div class="value" id="lowStockCount">0</div>
                     </div>
                 </div>
@@ -758,17 +915,10 @@
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
-        // Disable right-click
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-
-        // Disable Ctrl+U and Ctrl+S
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) {
-                e.preventDefault();
-            }
-        });
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
 
         // Offline/Online Detection
         window.addEventListener('online', () => {
@@ -866,6 +1016,7 @@
                 updateDashboard();
                 createWeeklyChart();
                 populateItemSelects();
+                checkLowStock();
             } catch (error) {
                 console.error('Load error:', error);
                 sales = getLocal('sales');
@@ -873,7 +1024,56 @@
                 renderSalesTable();
                 renderInventoryTable();
                 updateDashboard();
+                checkLowStock();
             }
+        }
+
+        // Low Stock Notifications
+        function checkLowStock() {
+            const lowStockItems = inventory.filter(i => i.quantity <= i.minStock);
+            
+            if (lowStockItems.length > 0) {
+                // Browser notification
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    const itemNames = lowStockItems.map(i => i.name).join(', ');
+                    new Notification('⚠️ Low Stock Alert', {
+                        body: `${lowStockItems.length} item(s) are low on stock: ${itemNames}`,
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>',
+                        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>'
+                    });
+                }
+                
+                // In-app notification
+                showInAppNotification(lowStockItems);
+            }
+        }
+
+        function showInAppNotification(items) {
+            const existing = document.getElementById('lowStockNotification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.id = 'lowStockNotification';
+            notification.className = 'notification-badge';
+            notification.innerHTML = `
+                <strong>⚠️ Low Stock Alert</strong><br>
+                ${items.length} item(s) need restocking
+            `;
+            notification.onclick = () => {
+                switchTab('inventory');
+                document.getElementById('inventoryStatusFilter').value = 'low-stock';
+                filterInventory();
+                notification.remove();
+            };
+            document.body.appendChild(notification);
+            
+            // Auto dismiss after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideIn 0.3s reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 10000);
         }
 
         async function loadSales() {
@@ -1083,6 +1283,7 @@
                 await loadAllData();
                 closeSaleModal();
                 alert('Sale completed!');
+                checkLowStock();
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error completing sale');
@@ -1196,6 +1397,7 @@
                 await loadAllData();
                 closeItemModal();
                 alert(editId ? 'Item updated' : 'Item added');
+                checkLowStock();
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -1449,7 +1651,15 @@
         function switchTab(name) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // Find and activate the tab button
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(name.split('-')[0])) {
+                    tab.classList.add('active');
+                }
+            });
+            
             document.getElementById(name).classList.add('active');
             
             if (name === 'daily-summary') generateDailySummary();
