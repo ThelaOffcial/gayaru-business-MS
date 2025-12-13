@@ -59,7 +59,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #4caf50;
+            background: #ffffff;
             animation: pulse 2s infinite;
         }
 
@@ -757,6 +757,18 @@
 
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
+
+        // Disable right-click
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable Ctrl+U and Ctrl+S
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+            }
+        });
 
         // Offline/Online Detection
         window.addEventListener('online', () => {
