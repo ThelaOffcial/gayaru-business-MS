@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #ff9800;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-box::after {
+            content: '🔍';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .filter-select {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-row .form-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
+        }
+
+        .sale-item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .item-total {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .item-total h3 {
+            color: #004085;
+            font-size: 24px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .summary-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f8f9fa;
+            font-size: 15px;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #e9ecef;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .sale-item-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>📊 Business Management</h1>
+                <p>Track Sales, Manage Inventory & Monitor Stock</p>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Online</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📈 Dashboard</button>
+            <button class="tab" onclick="switchTab('sales')">💰 Sales</button>
+            <button class="tab" onclick="switchTab('inventory')">📦 Inventory</button>
+            <button class="tab" onclick="switchTab('daily-summary')">📅 Daily</button>
+            <button class="tab" onclick="switchTab('monthly-summary')">📆 Monthly</button>
+            <button class="tab" onclick="switchTab('reports')">📊 Reports</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="tab-content active">
+                <h2 style="margin-bottom: 20px;">Today's Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>💵 Total Revenue</h3>
+                        <div class="value" id="dashTotal">Rs. 0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <h3>🛒 Items Sold</h3>
+                        <div class="value" id="dashItemsSold">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <h3>📝 Transactions</h3>
+                        <div class="value" id="dashTransactions">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <h3>💰 Average Sale</h3>
+                        <div class="value" id="dashAvgSale">Rs. 0</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <h3>📦 Total Items</h3>
+                        <div class="value" id="totalItems">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">
+                        <h3>⚠️ Low Stock</h3>
+                        <div class="value" id="lowStockCount">0</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Last 7 Days Sales</h3>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sales -->
+            <div id="sales" class="tab-content">
+                <div class="toolbar">
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <input type="text" id="salesSearch" placeholder="Search..." oninput="filterSales()">
+                        </div>
+                        <select class="filter-select" id="salesPaymentFilter" onchange="filterSales()">
+                            <option value="">All Payments</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="credit">Credit</option>
+                        </select>
+                        <input type="date" class="filter-select" id="salesDateFilter" onchange="filterSales()">
+                    </div>
+                    <button class="btn btn-primary" onclick="showSaleModal()">+ Add Sale</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Payment</th>
+                                <th>Total (Rs.)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px;">No sales records</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory -->
+            <div id="inventory" class="tab-content">
+                <div class="toolbar">
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <input type="text" id="inventorySearch" placeholder="Search items..." oninput="filterInventory()">
+                        </div>
+                        <select class="filter-select" id="inventoryStatusFilter" onchange="filterInventory()">
+                            <option value="">All Status</option>
+                            <option value="in-stock">In Stock</option>
+                            <option value="low-stock">Low Stock</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="showItemModal()">+ Add Item</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Stock</th>
+                                <th>Min Stock</th>
+                                <th>Price (Rs.)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">No items in inventory</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Daily Summary -->
+            <div id="daily-summary" class="tab-content">
+                <div class="toolbar">
+                    <h2>Daily Sales Summary</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="date" id="dailyDate" class="filter-select">
+                        <button class="btn btn-primary" onclick="generateDailySummary()">Generate</button>
+                    </div>
+                </div>
+                <div id="dailySummaryContent"></div>
+            </div>
+
+            <!-- Monthly Summary -->
+            <div id="monthly-summary" class="tab-content">
+                <div class="toolbar">
+                    <h2>Monthly Sales Summary</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="month" id="monthlyDate" class="filter-select">
+                        <button class="btn btn-primary" onclick="generateMonthlySummary()">Generate</button>
+                    </div>
+                </div>
+                <div id="monthlySummaryContent"></div>
+            </div>
+
+            <!-- Reports -->
+            <div id="reports" class="tab-content">
+                <h2 style="margin-bottom: 20px;">Sales Reports</h2>
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label>From Date</label>
+                            <input type="date" id="reportFromDate">
+                        </div>
+                        <div class="form-group">
+                            <label>To Date</label>
+                            <input type="date" id="reportToDate">
+                        </div>
+                        <button class="btn btn-primary" onclick="generateReport()">Generate</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Sales Trend</h3>
+                    <canvas id="salesTrendChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Payment Methods</h3>
+                    <canvas id="paymentChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Top Products</h3>
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Revenue</h3>
+                        <div class="value" id="reportRevenue">Rs. 0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <h3>Avg Daily</h3>
+                        <div class="value" id="reportAvg">Rs. 0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <h3>Transactions</h3>
+                        <div class="value" id="reportTrans">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 All Rights Reserved | Developed by Samithu Dinil</p>
+        </div>
+    </div>
+
+    <!-- Sale Modal -->
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Sale</h2>
+                <button class="close-btn" onclick="closeSaleModal()">×</button>
+            </div>
+            <form onsubmit="addSale(event)">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="saleDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod" required>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="credit">Credit Card</option>
+                    </select>
+                </div>
+                <h3 style="margin: 20px 0 15px;">Items</h3>
+                <div id="saleItemsContainer">
+                    <div class="sale-item-row">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Item</label>
+                            <select class="item-select" required onchange="updateItemPrice(this)">
+                                <option value="">Select Item</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Quantity</label>
+                            <input type="number" class="item-quantity" min="1" value="1" required onchange="calculateItemTotal(this)">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Price</label>
+                            <input type="number" class="item-price" step="0.01" readonly>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Total</label>
+                            <input type="number" class="item-total-input" step="0.01" readonly>
+                        </div>
+                        <button type="button" class="btn btn-danger" onclick="removeSaleItem(this)" style="margin-top: 28px;">×</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-warning" onclick="addSaleItemRow()" style="width: 100%; margin-top: 10px;">+ Add Item</button>
+                <div class="item-total">
+                    <h3>Total: Rs. <span id="grandTotal">0.00</span></h3>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 20px;">Complete Sale</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="itemModalTitle">Add Item</h2>
+                <button class="close-btn" onclick="closeItemModal()">×</button>
+            </div>
+            <form onsubmit="saveItem(event)">
+                <input type="hidden" id="editItemId">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label>Current Stock</label>
+                    <input type="number" id="itemQuantity" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Min Stock Level</label>
+                    <input type="number" id="itemMinStock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Price (Rs.)</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmutv3WWcTFOAzZtt-oBATm5G5WA8cEH0",
+            authDomain: "gayaru.firebaseapp.com",
+            projectId: "gayaru",
+            storageBucket: "gayaru.firebasestorage.app",
+            messagingSenderId: "606310030580",
+            appId: "1:606310030580:web:995779a1b7050c1519d2a1"
+        };
+
+        let db, sales = [], inventory = [], isOnline = navigator.onLine;
+        let weeklyChart, salesTrendChart, paymentChart, topProductsChart;
+
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+
+        // Offline/Online Detection
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateStatus();
+            syncOfflineData();
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateStatus();
+        });
+
+        function updateStatus() {
+            document.getElementById('statusDot').className = 'status-dot' + (isOnline ? '' : ' offline');
+            document.getElementById('statusText').textContent = isOnline ? 'Online' : 'Offline';
+        }
+
+        // LocalStorage Functions
+        function saveLocal(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function getLocal(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function savePending(data) {
+            const pending = getLocal('pending');
+            pending.push(data);
+            saveLocal('pending', pending);
+        }
+
+        async function syncOfflineData() {
+            const pending = getLocal('pending');
+            if (pending.length === 0) return;
+
+            for (let item of pending) {
+                try {
+                    if (item.type === 'sale') {
+                        await db.collection('sales').add(item.data);
+                        for (let saleItem of item.data.items) {
+                            const inv = inventory.find(i => i.id === saleItem.id);
+                            if (inv) {
+                                await db.collection('inventory').doc(saleItem.id).update({
+                                    quantity: inv.quantity
+                                });
+                            }
+                        }
+                    } else if (item.type === 'inventory') {
+                        if (item.action === 'add') {
+                            await db.collection('inventory').add(item.data);
+                        } else if (item.action === 'update') {
+                            await db.collection('inventory').doc(item.id).update(item.data);
+                        } else if (item.action === 'delete') {
+                            await db.collection('inventory').doc(item.id).delete();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Sync error:', error);
+                }
+            }
+            saveLocal('pending', []);
+            await loadAllData();
+            alert('✅ Offline data synced successfully!');
+        }
+
+        // Load Data
+        window.addEventListener('load', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('saleDate').value = today;
+            document.getElementById('dailyDate').value = today;
+            document.getElementById('monthlyDate').value = today.slice(0, 7);
+            
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            document.getElementById('reportFromDate').value = sevenDaysAgo;
+            document.getElementById('reportToDate').value = today;
+            
+            updateStatus();
+            loadAllData();
+        });
+
+        async function loadAllData() {
+            try {
+                if (isOnline) {
+                    await loadSales();
+                    await loadInventory();
+                } else {
+                    sales = getLocal('sales');
+                    inventory = getLocal('inventory');
+                }
+                renderSalesTable();
+                renderInventoryTable();
+                updateDashboard();
+                createWeeklyChart();
+                populateItemSelects();
+            } catch (error) {
+                console.error('Load error:', error);
+                sales = getLocal('sales');
+                inventory = getLocal('inventory');
+                renderSalesTable();
+                renderInventoryTable();
+                updateDashboard();
+            }
+        }
+
+        async function loadSales() {
+            const snapshot = await db.collection('sales').orderBy('date', 'desc').get();
+            sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            saveLocal('sales', sales);
+        }
+
+        async function loadInventory() {
+            const snapshot = await db.collection('inventory').orderBy('name').get();
+            inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            saveLocal('inventory', inventory);
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todaySales = sales.filter(s => s.date === today);
+            const total = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const items = todaySales.reduce((sum, s) => sum + (s.items ? s.items.reduce((i, it) => i + it.quantity, 0) : 0), 0);
+            const avg = todaySales.length > 0 ? total / todaySales.length : 0;
+
+            document.getElementById('dashTotal').textContent = `Rs. ${total.toFixed(2)}`;
+            document.getElementById('dashItemsSold').textContent = items;
+            document.getElementById('dashTransactions').textContent = todaySales.length;
+            document.getElementById('dashAvgSale').textContent = `Rs. ${avg.toFixed(2)}`;
+            document.getElementById('totalItems').textContent = inventory.length;
+            
+            const lowStock = inventory.filter(i => i.quantity <= i.minStock);
+            document.getElementById('lowStockCount').textContent = lowStock.length;
+        }
+
+        // Sales Functions
+        function showSaleModal() {
+            populateItemSelects();
+            document.getElementById('saleModal').classList.add('active');
+        }
+
+        function closeSaleModal() {
+            document.getElementById('saleModal').classList.remove('active');
+            resetSaleItems();
+        }
+
+        function resetSaleItems() {
+            document.getElementById('saleItemsContainer').innerHTML = `
+                <div class="sale-item-row">
+                    <div class="form-group" style="margin: 0;">
+                        <label>Item</label>
+                        <select class="item-select" required onchange="updateItemPrice(this)">
+                            <option value="">Select Item</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Quantity</label>
+                        <input type="number" class="item-quantity" min="1" value="1" required onchange="calculateItemTotal(this)">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Price</label>
+                        <input type="number" class="item-price" step="0.01" readonly>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Total</label>
+                        <input type="number" class="item-total-input" step="0.01" readonly>
+                    </div>
+                    <button type="button" class="btn btn-danger" onclick="removeSaleItem(this)" style="margin-top: 28px;">×</button>
+                </div>
+            `;
+            populateItemSelects();
+            document.getElementById('grandTotal').textContent = '0.00';
+        }
+
+        function populateItemSelects() {
+            document.querySelectorAll('.item-select').forEach(select => {
+                select.innerHTML = '<option value="">Select Item</option>';
+                inventory.forEach(item => {
+                    if (item.quantity > 0) {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = `${item.name} (${item.quantity})`;
+                        opt.dataset.price = item.price;
+                        opt.dataset.stock = item.quantity;
+                        select.appendChild(opt);
+                    }
+                });
+            });
+        }
+
+        function addSaleItemRow() {
+            const container = document.getElementById('saleItemsContainer');
+            const row = document.createElement('div');
+            row.className = 'sale-item-row';
+            row.innerHTML = `
+                <div class="form-group" style="margin: 0;">
+                    <label>Item</label>
+                    <select class="item-select" required onchange="updateItemPrice(this)">
+                        <option value="">Select Item</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Quantity</label>
+                    <input type="number" class="item-quantity" min="1" value="1" required onchange="calculateItemTotal(this)">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Price</label>
+                    <input type="number" class="item-price" step="0.01" readonly>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Total</label>
+                    <input type="number" class="item-total-input" step="0.01" readonly>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="removeSaleItem(this)" style="margin-top: 28px;">×</button>
+            `;
+            container.appendChild(row);
+            populateItemSelects();
+        }
+
+        function removeSaleItem(btn) {
+            if (document.querySelectorAll('.sale-item-row').length > 1) {
+                btn.closest('.sale-item-row').remove();
+                calculateGrandTotal();
+            }
+        }
+
+        function updateItemPrice(select) {
+            const row = select.closest('.sale-item-row');
+            const opt = select.options[select.selectedIndex];
+            row.querySelector('.item-price').value = parseFloat(opt.dataset.price || 0).toFixed(2);
+            row.querySelector('.item-quantity').max = opt.dataset.stock || 0;
+            calculateItemTotal(row.querySelector('.item-quantity'));
+        }
+
+        function calculateItemTotal(input) {
+            const row = input.closest('.sale-item-row');
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const qty = parseInt(input.value) || 0;
+            row.querySelector('.item-total-input').value = (price * qty).toFixed(2);
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('.item-total-input').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('grandTotal').textContent = total.toFixed(2);
+        }
+
+        async function addSale(e) {
+            e.preventDefault();
+            const rows = document.querySelectorAll('.sale-item-row');
+            const items = [];
+            let grandTotal = 0;
+            
+            for (let row of rows) {
+                const select = row.querySelector('.item-select');
+                const itemId = select.value;
+                if (!itemId) continue;
+                
+                const name = select.options[select.selectedIndex].text.split(' (')[0];
+                const qty = parseInt(row.querySelector('.item-quantity').value);
+                const price = parseFloat(row.querySelector('.item-price').value);
+                const total = parseFloat(row.querySelector('.item-total-input').value);
+                
+                const item = inventory.find(i => i.id === itemId);
+                if (qty > item.quantity) {
+                    alert(`Not enough stock for ${name}`);
+                    return;
+                }
+                
+                items.push({ id: itemId, name, quantity: qty, price, total });
+                grandTotal += total;
+            }
+            
+            if (items.length === 0) {
+                alert('Please add items');
+                return;
+            }
+            
+            const saleData = {
+                date: document.getElementById('saleDate').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                items,
+                total: grandTotal,
+                timestamp: new Date()
+            };
+
+            try {
+                if (isOnline) {
+                    await db.collection('sales').add(saleData);
+                    for (let item of items) {
+                        const inv = inventory.find(i => i.id === item.id);
+                        inv.quantity -= item.quantity;
+                        await db.collection('inventory').doc(item.id).update({ quantity: inv.quantity });
+                    }
+                } else {
+                    saleData.id = 'temp_' + Date.now();
+                    sales.unshift(saleData);
+                    for (let item of items) {
+                        const inv = inventory.find(i => i.id === item.id);
+                        inv.quantity -= item.quantity;
+                    }
+                    saveLocal('sales', sales);
+                    saveLocal('inventory', inventory);
+                    savePending({ type: 'sale', data: saleData });
+                }
+                
+                await loadAllData();
+                closeSaleModal();
+                alert('Sale completed!');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error completing sale');
+            }
+        }
+
+        function filterSales() {
+            const search = document.getElementById('salesSearch').value.toLowerCase();
+            const payment = document.getElementById('salesPaymentFilter').value;
+            const date = document.getElementById('salesDateFilter').value;
+            
+            let filtered = sales;
+            if (search) filtered = filtered.filter(s => s.items.some(i => i.name.toLowerCase().includes(search)));
+            if (payment) filtered = filtered.filter(s => s.paymentMethod === payment);
+            if (date) filtered = filtered.filter(s => s.date === date);
+            
+            renderSalesTable(filtered);
+        }
+
+        function renderSalesTable(data = sales) {
+            const tbody = document.getElementById('salesTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">No sales</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.date}</td>
+                    <td>${s.items.length} item(s)</td>
+                    <td style="text-transform: capitalize;">${s.paymentMethod}</td>
+                    <td><strong>Rs. ${s.total.toFixed(2)}</strong></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="viewSale('${s.id}')">View</button>
+                            <button class="btn btn-danger" onclick="deleteSale('${s.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewSale(id) {
+            const s = sales.find(sale => sale.id === id);
+            if (!s) return;
+            let msg = `Date: ${s.date}\nPayment: ${s.paymentMethod}\n\nItems:\n`;
+            s.items.forEach(i => msg += `${i.name} - ${i.quantity} x Rs.${i.price.toFixed(2)} = Rs.${i.total.toFixed(2)}\n`);
+            msg += `\nTotal: Rs.${s.total.toFixed(2)}`;
+            alert(msg);
+        }
+
+        async function deleteSale(id) {
+            if (!confirm('Delete sale?')) return;
+            try {
+                if (isOnline) {
+                    await db.collection('sales').doc(id).delete();
+                } else {
+                    sales = sales.filter(s => s.id !== id);
+                    saveLocal('sales', sales);
+                }
+                await loadAllData();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Inventory Functions
+        function showItemModal() {
+            document.getElementById('itemModalTitle').textContent = 'Add Item';
+            document.getElementById('itemModal').classList.add('active');
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').classList.remove('active');
+            document.getElementById('editItemId').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQuantity').value = '';
+            document.getElementById('itemMinStock').value = '';
+            document.getElementById('itemPrice').value = '';
+        }
+
+        async function saveItem(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('itemName').value,
+                quantity: parseInt(document.getElementById('itemQuantity').value),
+                minStock: parseInt(document.getElementById('itemMinStock').value),
+                price: parseFloat(document.getElementById('itemPrice').value)
+            };
+            const editId = document.getElementById('editItemId').value;
+
+            try {
+                if (isOnline) {
+                    if (editId) {
+                        await db.collection('inventory').doc(editId).update(data);
+                    } else {
+                        await db.collection('inventory').add(data);
+                    }
+                } else {
+                    if (editId) {
+                        const item = inventory.find(i => i.id === editId);
+                        Object.assign(item, data);
+                    } else {
+                        data.id = 'temp_' + Date.now();
+                        inventory.push(data);
+                    }
+                    saveLocal('inventory', inventory);
+                    savePending({ type: 'inventory', action: editId ? 'update' : 'add', id: editId, data });
+                }
+                
+                await loadAllData();
+                closeItemModal();
+                alert(editId ? 'Item updated' : 'Item added');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function editItem(id) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                document.getElementById('itemModalTitle').textContent = 'Edit Item';
+                document.getElementById('editItemId').value = id;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemQuantity').value = item.quantity;
+                document.getElementById('itemMinStock').value = item.minStock;
+                document.getElementById('itemPrice').value = item.price;
+                document.getElementById('itemModal').classList.add('active');
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Delete item?')) return;
+            try {
+                if (isOnline) {
+                    await db.collection('inventory').doc(id).delete();
+                } else {
+                    inventory = inventory.filter(i => i.id !== id);
+                    saveLocal('inventory', inventory);
+                    savePending({ type: 'inventory', action: 'delete', id });
+                }
+                await loadAllData();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function filterInventory() {
+            const search = document.getElementById('inventorySearch').value.toLowerCase();
+            const status = document.getElementById('inventoryStatusFilter').value;
+            
+            let filtered = inventory;
+            if (search) filtered = filtered.filter(i => i.name.toLowerCase().includes(search));
+            if (status === 'low-stock') filtered = filtered.filter(i => i.quantity <= i.minStock);
+            if (status === 'in-stock') filtered = filtered.filter(i => i.quantity > i.minStock);
+            
+            renderInventoryTable(filtered);
+        }
+
+        function renderInventoryTable(data = inventory) {
+            const tbody = document.getElementById('inventoryTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">No items</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(i => {
+                const isLow = i.quantity <= i.minStock;
+                return `
+                    <tr>
+                        <td>${i.name}</td>
+                        <td>${i.quantity}</td>
+                        <td>${i.minStock}</td>
+                        <td>Rs. ${i.price.toFixed(2)}</td>
+                        <td style="color: ${isLow ? '#dc3545' : '#28a745'}; font-weight: bold;">
+                            ${isLow ? '⚠️ Low' : '✅ OK'}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="editItem('${i.id}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteItem('${i.id}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Daily Summary
+        function generateDailySummary() {
+            const date = document.getElementById('dailyDate').value;
+            const daySales = sales.filter(s => s.date === date);
+            const total = daySales.reduce((sum, s) => sum + s.total, 0);
+            const items = daySales.reduce((sum, s) => sum + s.items.reduce((i, it) => i + it.quantity, 0), 0);
+            
+            const cash = daySales.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0);
+            const cheque = daySales.filter(s => s.paymentMethod === 'cheque').reduce((sum, s) => sum + s.total, 0);
+            const credit = daySales.filter(s => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0);
+            
+            const products = {};
+            daySales.forEach(s => s.items.forEach(i => products[i.name] = (products[i.name] || 0) + i.quantity));
+            const top = Object.entries(products).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            document.getElementById('dailySummaryContent').innerHTML = `
+                <div class="summary-card">
+                    <h3>Summary - ${date}</h3>
+                    <div class="summary-row"><span>Total Revenue:</span><strong>Rs. ${total.toFixed(2)}</strong></div>
+                    <div class="summary-row"><span>Transactions:</span><strong>${daySales.length}</strong></div>
+                    <div class="summary-row"><span>Items Sold:</span><strong>${items}</strong></div>
+                    <div class="summary-row"><span>Average:</span><strong>Rs. ${(daySales.length ? total/daySales.length : 0).toFixed(2)}</strong></div>
+                </div>
+                <div class="summary-card">
+                    <h3>Payment Methods</h3>
+                    <div class="summary-row"><span>Cash:</span><strong>Rs. ${cash.toFixed(2)}</strong></div>
+                    <div class="summary-row"><span>Cheque:</span><strong>Rs. ${cheque.toFixed(2)}</strong></div>
+                    <div class="summary-row"><span>Credit:</span><strong>Rs. ${credit.toFixed(2)}</strong></div>
+                </div>
+                <div class="summary-card">
+                    <h3>Top Products</h3>
+                    ${top.map((p, i) => `<div class="summary-row"><span>${i+1}. ${p[0]}</span><strong>${p[1]} units</strong></div>`).join('') || '<div class="summary-row"><span>No products</span></div>'}
+                </div>
+            `;
+        }
+
+        // Monthly Summary
+        function generateMonthlySummary() {
+            const month = document.getElementById('monthlyDate').value;
+            const monthSales = sales.filter(s => s.date.startsWith(month));
+            const total = monthSales.reduce((sum, s) => sum + s.total, 0);
+            const items = monthSales.reduce((sum, s) => sum + s.items.reduce((i, it) => i + it.quantity, 0), 0);
+            
+            const cash = monthSales.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0);
+            const cheque = monthSales.filter(s => s.paymentMethod === 'cheque').reduce((sum, s) => sum + s.total, 0);
+            const credit = monthSales.filter(s => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0);
+            
+            const daily = {};
+            monthSales.forEach(s => daily[s.date] = (daily[s.date] || 0) + s.total);
+            const avgDaily = Object.keys(daily).length ? total / Object.keys(daily).length : 0;
+            
+            const products = {};
+            monthSales.forEach(s => s.items.forEach(i => {
+                if (!products[i.name]) products[i.name] = { qty: 0, rev: 0 };
+                products[i.name].qty += i.quantity;
+                products[i.name].rev += i.total;
+            }));
+            const top = Object.entries(products).sort((a, b) => b[1].rev - a[1].rev).slice(0, 10);
+
+            document.getElementById('monthlySummaryContent').innerHTML = `
+                <div class="summary-card">
+                    <h3>Monthly Summary - ${month}</h3>
+                    <div class="summary-row"><span>Total Revenue:</span><strong>Rs. ${total.toFixed(2)}</strong></div>
+                    <div class="summary-row"><span>Transactions:</span><strong>${monthSales.length}</strong></div>
+                    <div class="summary-row"><span>Items Sold:</span><strong>${items}</strong></div>
+                    <div class="summary-row"><span>Avg Daily:</span><strong>Rs. ${avgDaily.toFixed(2)}</strong></div>
+                    <div class="summary-row"><span>Days with Sales:</span><strong>${Object.keys(daily).length}</strong></div>
+                </div>
+                <div class="summary-card">
+                    <h3>Payment Methods</h3>
+                    <div class="summary-row"><span>Cash:</span><strong>Rs. ${cash.toFixed(2)} (${total ? ((cash/total)*100).toFixed(1) : 0}%)</strong></div>
+                    <div class="summary-row"><span>Cheque:</span><strong>Rs. ${cheque.toFixed(2)} (${total ? ((cheque/total)*100).toFixed(1) : 0}%)</strong></div>
+                    <div class="summary-row"><span>Credit:</span><strong>Rs. ${credit.toFixed(2)} (${total ? ((credit/total)*100).toFixed(1) : 0}%)</strong></div>
+                </div>
+                <div class="summary-card">
+                    <h3>Top 10 Products</h3>
+                    ${top.map((p, i) => `<div class="summary-row"><span>${i+1}. ${p[0]}</span><strong>${p[1].qty} units - Rs. ${p[1].rev.toFixed(2)}</strong></div>`).join('') || '<div class="summary-row"><span>No products</span></div>'}
+                </div>
+            `;
+        }
+
+        // Charts
+        function createWeeklyChart() {
+            const today = new Date();
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
+            }
+            
+            const totals = days.map(d => sales.filter(s => s.date === d).reduce((sum, s) => sum + s.total, 0));
+            const labels = days.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            
+            if (weeklyChart) weeklyChart.destroy();
+            
+            weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Sales (Rs.)',
+                        data: totals,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function generateReport() {
+            const from = document.getElementById('reportFromDate').value;
+            const to = document.getElementById('reportToDate').value;
+            const filtered = sales.filter(s => s.date >= from && s.date <= to);
+            
+            const total = filtered.reduce((sum, s) => sum + s.total, 0);
+            const cash = filtered.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0);
+            const cheque = filtered.filter(s => s.paymentMethod === 'cheque').reduce((sum, s) => sum + s.total, 0);
+            const credit = filtered.filter(s => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0);
+            
+            const days = Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
+            const avg = filtered.length ? total / days : 0;
+            
+            document.getElementById('reportRevenue').textContent = `Rs. ${total.toFixed(2)}`;
+            document.getElementById('reportAvg').textContent = `Rs. ${avg.toFixed(2)}`;
+            document.getElementById('reportTrans').textContent = filtered.length;
+            
+            // Sales Trend Chart
+            const dateMap = {};
+            filtered.forEach(s => dateMap[s.date] = (dateMap[s.date] || 0) + s.total);
+            const dates = Object.keys(dateMap).sort();
+            const values = dates.map(d => dateMap[d]);
+            const labels = dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            
+            if (salesTrendChart) salesTrendChart.destroy();
+            salesTrendChart = new Chart(document.getElementById('salesTrendChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Sales (Rs.)', data: values, backgroundColor: '#667eea' }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            
+            // Payment Chart
+            if (paymentChart) paymentChart.destroy();
+            paymentChart = new Chart(document.getElementById('paymentChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cash', 'Cheque', 'Credit'],
+                    datasets: [{ data: [cash, cheque, credit], backgroundColor: ['#43e97b', '#f5576c', '#4facfe'] }]
+                },
+                options: { responsive: true }
+            });
+            
+            // Top Products Chart
+            const products = {};
+            filtered.forEach(s => s.items.forEach(i => products[i.name] = (products[i.name] || 0) + i.quantity));
+            const top = Object.entries(products).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            if (topProductsChart) topProductsChart.destroy();
+            topProductsChart = new Chart(document.getElementById('topProductsChart'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: top.map(p => p[0]),
+                    datasets: [{ label: 'Quantity', data: top.map(p => p[1]), backgroundColor: '#764ba2' }]
+                },
+                options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+            });
+        }
+
+        // Tab Switching
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(name).classList.add('active');
+            
+            if (name === 'daily-summary') generateDailySummary();
+            if (name === 'monthly-summary') generateMonthlySummary();
+            if (name === 'reports') generateReport();
+        }
+    </script>
+</body>
+</html>
