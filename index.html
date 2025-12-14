@@ -628,6 +628,7 @@
             <button class="tab" onclick="switchTab('daily-summary')">Daily</button>
             <button class="tab" onclick="switchTab('monthly-summary')">Monthly</button>
             <button class="tab" onclick="switchTab('reports')">Reports</button>
+            <button class="tab" onclick="switchTab('logs')">Logs</button>
         </div>
 
         <div class="content">
@@ -810,6 +811,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Logs -->
+            <div id="logs" class="tab-content">
+                <div class="toolbar">
+                    <h2>Activity Logs</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="clearLogs()">Clear Logs</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 40px;">No logs available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
       
@@ -961,7 +990,7 @@
             appId: "1:606310030580:web:995779a1b7050c1519d2a1"
         };
 
-        let db, sales = [], inventory = [], isOnline = navigator.onLine;
+        let db, sales = [], inventory = [], logs = [], isOnline = navigator.onLine;
         let weeklyChart, salesTrendChart, paymentChart, topProductsChart;
 
         firebase.initializeApp(firebaseConfig);
@@ -1055,12 +1084,15 @@
                 if (isOnline) {
                     await loadSales();
                     await loadInventory();
+                    await loadLogs();
                 } else {
                     sales = getLocal('sales');
                     inventory = getLocal('inventory');
+                    logs = getLocal('logs');
                 }
                 renderSalesTable();
                 renderInventoryTable();
+                renderLogsTable();
                 updateDashboard();
                 createWeeklyChart();
                 populateItemSelects();
@@ -1069,8 +1101,10 @@
                 console.error('Load error:', error);
                 sales = getLocal('sales');
                 inventory = getLocal('inventory');
+                logs = getLocal('logs');
                 renderSalesTable();
                 renderInventoryTable();
+                renderLogsTable();
                 updateDashboard();
                 checkLowStock();
             }
@@ -1129,6 +1163,67 @@
             const snapshot = await db.collection('inventory').orderBy('name').get();
             inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             saveLocal('inventory', inventory);
+        }
+
+        async function loadLogs() {
+            const snapshot = await db.collection('logs').orderBy('timestamp', 'desc').get();
+            logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            saveLocal('logs', logs);
+        }
+
+        function addLog(action, details, user = 'System') {
+            const logEntry = {
+                timestamp: new Date(),
+                action,
+                details,
+                user
+            };
+            logs.unshift(logEntry);
+            saveLocal('logs', logs);
+            renderLogsTable();
+            if (isOnline) {
+                db.collection('logs').add(logEntry);
+            }
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No logs available</td></tr>';
+                return;
+            }
+            tbody.innerHTML = logs.map(log => {
+                let timestamp;
+                if (log.timestamp && log.timestamp.seconds) {
+                    // Firestore timestamp
+                    timestamp = new Date(log.timestamp.seconds * 1000);
+                } else if (log.timestamp instanceof Date) {
+                    // Local Date object
+                    timestamp = log.timestamp;
+                } else {
+                    // Fallback
+                    timestamp = new Date(log.timestamp);
+                }
+                return `
+                    <tr>
+                        <td>${timestamp.toLocaleString()}</td>
+                        <td>${log.action}</td>
+                        <td>${log.details}</td>
+                        <td>${log.user}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function clearLogs() {
+            if (!confirm('Clear all logs?')) return;
+            logs = [];
+            saveLocal('logs', logs);
+            renderLogsTable();
+            if (isOnline) {
+                // Note: Clearing all logs from Firestore would require deleting each document
+                // For simplicity, we'll just clear local and assume manual cleanup
+            }
         }
 
         function updateDashboard() {
@@ -1324,6 +1419,7 @@
                 
                 await loadAllData();
                 closeSaleModal();
+                addLog('Sale Added', `Total: Rs. ${grandTotal.toFixed(2)}, Items: ${items.length}`);
                 alert('Sale completed!');
                 checkLowStock();
             } catch (error) {
@@ -1438,6 +1534,7 @@
                 
                 await loadAllData();
                 closeItemModal();
+                addLog(editId ? 'Item Updated' : 'Item Added', `Name: ${data.name}, Quantity: ${data.quantity}, Price: Rs. ${data.price.toFixed(2)}`);
                 alert(editId ? 'Item updated' : 'Item added');
                 checkLowStock();
             } catch (error) {
@@ -1459,16 +1556,15 @@
         }
 
         // Stock Update Functions
-        function showStockModal(id) {
+        function showStockModal(id, action = 'add') {
             const item = inventory.find(i => i.id === id);
             if (item) {
                 document.getElementById('stockItemId').value = id;
                 document.getElementById('stockItemName').value = item.name;
                 document.getElementById('stockCurrentQty').value = item.quantity;
-                document.getElementById('stockAction').value = 'add';
+                document.getElementById('stockAction').value = action;
                 document.getElementById('stockQty').value = '';
-                document.getElementById('stockQtyLabel').textContent = 'Quantity to Add';
-                document.getElementById('stockNewTotal').value = item.quantity;
+                updateStockPreview();
                 document.getElementById('stockModal').classList.add('active');
             }
         }
@@ -1515,6 +1611,7 @@
                 
                 await loadAllData();
                 closeStockModal();
+                addLog('Stock Updated', `Item: ${item.name}, Action: ${action}, Quantity: ${qty}, New Total: ${newTotal}`);
                 alert('Stock updated successfully!');
                 checkLowStock();
             } catch (error) {
@@ -1571,7 +1668,8 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn btn-warning" onclick="showStockModal('${i.id}')">Stock</button>
+                                <button class="btn btn-success" onclick="showStockModal('${i.id}', 'add')">Add</button>
+                                <button class="btn btn-warning" onclick="showStockModal('${i.id}', 'reduce')">Reduce</button>
                                 <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="editItem('${i.id}')">Edit</button>
                                 <button class="btn btn-danger" onclick="deleteItem('${i.id}')">Delete</button>
                             </div>
