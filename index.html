@@ -453,6 +453,11 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        .stock-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 0;
@@ -807,6 +812,7 @@
             </div>
         </div>
 
+      
         <div class="footer">
             <p>&copy; 2025 All Rights Reserved | Developed by <b>Samithu Dinil </b> <img src="dev.gif" alt="Computer man" style="width:28px;height:28px;"></p>
         </div>
@@ -895,11 +901,57 @@
         </div>
     </div>
 
+    <!-- Stock Update Modal -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Stock</h2>
+                <button class="close-btn" onclick="closeStockModal()">×</button>
+            </div>
+            <form onsubmit="updateStock(event)">
+                <input type="hidden" id="stockItemId">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="stockItemName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Current Stock</label>
+                    <input type="number" id="stockCurrentQty" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Action</label>
+                    <select id="stockAction" onchange="updateStockPreview()">
+                        <option value="add">Add Stock</option>
+                        <option value="reduce">Reduce Stock</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="stockQtyLabel">Quantity to Add</label>
+                    <input type="number" id="stockQty" min="1" required oninput="updateStockPreview()">
+                </div>
+                <div class="form-group">
+                    <label>New Total Stock</label>
+                    <input type="number" id="stockNewTotal" readonly>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Update Stock</button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <script>
+        // Disable right-click and keyboard shortcuts
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'U' || e.key === 'S')) {
+                e.preventDefault();
+            }
+            if (e.key === 'F12') e.preventDefault();
+        });
+
         const firebaseConfig = {
             apiKey: "AIzaSyAmutv3WWcTFOAzZtt-oBATm5G5WA8cEH0",
             authDomain: "gayaru.firebaseapp.com",
@@ -915,12 +967,10 @@
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
-        // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
 
-        // Offline/Online Detection
         window.addEventListener('online', () => {
             isOnline = true;
             updateStatus();
@@ -937,7 +987,6 @@
             document.getElementById('statusText').textContent = isOnline ? 'Online' : 'Offline';
         }
 
-        // LocalStorage Functions
         function saveLocal(key, data) {
             localStorage.setItem(key, JSON.stringify(data));
         }
@@ -987,7 +1036,6 @@
             alert('✅ Offline data synced successfully!');
         }
 
-        // Load Data
         window.addEventListener('load', () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('saleDate').value = today;
@@ -1028,22 +1076,18 @@
             }
         }
 
-        // Low Stock Notifications
         function checkLowStock() {
             const lowStockItems = inventory.filter(i => i.quantity <= i.minStock);
             
             if (lowStockItems.length > 0) {
-                // Browser notification
                 if ('Notification' in window && Notification.permission === 'granted') {
                     const itemNames = lowStockItems.map(i => i.name).join(', ');
                     new Notification('⚠️ Low Stock Alert', {
                         body: `${lowStockItems.length} item(s) are low on stock: ${itemNames}`,
-                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>',
-                        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>'
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>'
                     });
                 }
                 
-                // In-app notification
                 showInAppNotification(lowStockItems);
             }
         }
@@ -1067,7 +1111,6 @@
             };
             document.body.appendChild(notification);
             
-            // Auto dismiss after 10 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.style.animation = 'slideIn 0.3s reverse';
@@ -1088,7 +1131,6 @@
             saveLocal('inventory', inventory);
         }
 
-        // Dashboard
         function updateDashboard() {
             const today = new Date().toISOString().split('T')[0];
             const todaySales = sales.filter(s => s.date === today);
@@ -1416,6 +1458,71 @@
             }
         }
 
+        // Stock Update Functions
+        function showStockModal(id) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                document.getElementById('stockItemId').value = id;
+                document.getElementById('stockItemName').value = item.name;
+                document.getElementById('stockCurrentQty').value = item.quantity;
+                document.getElementById('stockAction').value = 'add';
+                document.getElementById('stockQty').value = '';
+                document.getElementById('stockQtyLabel').textContent = 'Quantity to Add';
+                document.getElementById('stockNewTotal').value = item.quantity;
+                document.getElementById('stockModal').classList.add('active');
+            }
+        }
+
+        function closeStockModal() {
+            document.getElementById('stockModal').classList.remove('active');
+        }
+
+        function updateStockPreview() {
+            const current = parseInt(document.getElementById('stockCurrentQty').value) || 0;
+            const action = document.getElementById('stockAction').value;
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            
+            if (action === 'add') {
+                document.getElementById('stockQtyLabel').textContent = 'Quantity to Add';
+                document.getElementById('stockNewTotal').value = current + qty;
+            } else {
+                document.getElementById('stockQtyLabel').textContent = 'Quantity to Reduce';
+                document.getElementById('stockNewTotal').value = Math.max(0, current - qty);
+            }
+        }
+
+        async function updateStock(e) {
+            e.preventDefault();
+            const id = document.getElementById('stockItemId').value;
+            const action = document.getElementById('stockAction').value;
+            const qty = parseInt(document.getElementById('stockQty').value);
+            const newTotal = parseInt(document.getElementById('stockNewTotal').value);
+            const item = inventory.find(i => i.id === id);
+
+            if (action === 'reduce' && qty > item.quantity) {
+                alert('Cannot reduce more than current stock!');
+                return;
+            }
+
+            try {
+                if (isOnline) {
+                    await db.collection('inventory').doc(id).update({ quantity: newTotal });
+                } else {
+                    item.quantity = newTotal;
+                    saveLocal('inventory', inventory);
+                    savePending({ type: 'inventory', action: 'update', id, data: { quantity: newTotal } });
+                }
+                
+                await loadAllData();
+                closeStockModal();
+                alert('Stock updated successfully!');
+                checkLowStock();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating stock');
+            }
+        }
+
         async function deleteItem(id) {
             if (!confirm('Delete item?')) return;
             try {
@@ -1464,6 +1571,7 @@
                         </td>
                         <td>
                             <div class="action-buttons">
+                                <button class="btn btn-warning" onclick="showStockModal('${i.id}')">Stock</button>
                                 <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="editItem('${i.id}')">Edit</button>
                                 <button class="btn btn-danger" onclick="deleteItem('${i.id}')">Delete</button>
                             </div>
@@ -1652,7 +1760,6 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            // Find and activate the tab button
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(tab => {
                 if (tab.textContent.toLowerCase().includes(name.split('-')[0])) {
