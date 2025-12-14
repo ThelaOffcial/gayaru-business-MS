@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -348,6 +349,11 @@
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 30px;
+        }
+
+        #weeklyChart {
+            width: 100%;
+            height: 250px;
         }
 
         .filter-section {
@@ -1106,6 +1112,8 @@
                 renderInventoryTable();
                 renderLogsTable();
                 updateDashboard();
+                createWeeklyChart();
+                populateItemSelects();
                 checkLowStock();
             }
         }
@@ -1761,37 +1769,61 @@
         }
 
         // Charts
-        function createWeeklyChart() {
-            const today = new Date();
-            const days = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                days.push(d.toISOString().split('T')[0]);
-            }
-            
-            const totals = days.map(d => sales.filter(s => s.date === d).reduce((sum, s) => sum + s.total, 0));
-            const labels = days.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
-            if (weeklyChart) weeklyChart.destroy();
-            
-            weeklyChart = new Chart(document.getElementById('weeklyChart'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Sales (Rs.)',
-                        data: totals,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-        }
+       function createWeeklyChart() {
+    const today = new Date();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().split('T')[0]);
+    }
 
+    const totals = days.map(d => sales.filter(s => s.date === d).reduce((sum, s) => sum + s.total, 0));
+    const labels = days.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+
+    if (weeklyChart) weeklyChart.destroy();
+
+    weeklyChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Sales (Rs.)',
+                data: totals,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rs. ' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
         function generateReport() {
             const from = document.getElementById('reportFromDate').value;
             const to = document.getElementById('reportToDate').value;
@@ -1844,7 +1876,7 @@
             
             if (topProductsChart) topProductsChart.destroy();
             topProductsChart = new Chart(document.getElementById('topProductsChart'), {
-                type: 'horizontalBar',
+                type: 'Bar',
                 data: {
                     labels: top.map(p => p[0]),
                     datasets: [{ label: 'Quantity', data: top.map(p => p[1]), backgroundColor: '#764ba2' }]
