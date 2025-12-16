@@ -1042,8 +1042,16 @@
             const pending = getLocal('pending');
             if (pending.length === 0) return;
 
+            let successCount = 0;
+            let errorCount = 0;
+
             for (let item of pending) {
                 try {
+                    // Ensure timestamp is Date object for Firestore
+                    if ((item.type === 'log' || item.type === 'sale') && item.data.timestamp) {
+                        item.data.timestamp = new Date(item.data.timestamp);
+                    }
+
                     if (item.type === 'sale') {
                         await db.collection('sales').add(item.data);
                         for (let saleItem of item.data.items) {
@@ -1062,14 +1070,23 @@
                         } else if (item.action === 'delete') {
                             await db.collection('inventory').doc(item.id).delete();
                         }
+                    } else if (item.type === 'log') {
+                        await db.collection('logs').add(item.data);
                     }
+                    successCount++;
                 } catch (error) {
                     console.error('Sync error:', error);
+                    errorCount++;
                 }
             }
             saveLocal('pending', []);
             await loadAllData();
-            alert('✅ Offline data synced successfully!');
+            if (successCount > 0) {
+                alert(`✅ Synced ${successCount} item(s) successfully!`);
+            }
+            if (errorCount > 0) {
+                alert(`❌ Failed to sync ${errorCount} item(s). Check console for details.`);
+            }
         }
 
         window.addEventListener('load', () => {
@@ -1180,7 +1197,7 @@
             saveLocal('logs', logs);
         }
 
-        function addLog(action, details, user = 'System') {
+        async function addLog(action, details, user = 'System') {
             const logEntry = {
                 timestamp: new Date(),
                 action,
@@ -1191,7 +1208,14 @@
             saveLocal('logs', logs);
             renderLogsTable();
             if (isOnline) {
-                db.collection('logs').add(logEntry);
+                try {
+                    await db.collection('logs').add(logEntry);
+                } catch (error) {
+                    console.error('Error saving log to Firebase:', error);
+                    savePending({ type: 'log', data: logEntry });
+                }
+            } else {
+                savePending({ type: 'log', data: logEntry });
             }
         }
 
@@ -1354,7 +1378,7 @@
         function calculateItemTotal(input) {
             const row = input.closest('.sale-item-row');
             const price = parseFloat(row.querySelector('.item-price').value) || 0;
-            const qty = parseInt(input.value) || 0;
+            const qty = parseInt(row.querySelector('.item-quantity').value) || 0;
             row.querySelector('.item-total-input').value = (price * qty).toFixed(2);
             calculateGrandTotal();
         }
@@ -1413,6 +1437,7 @@
                         const inv = inventory.find(i => i.id === item.id);
                         inv.quantity -= item.quantity;
                         await db.collection('inventory').doc(item.id).update({ quantity: inv.quantity });
+                        addLog('Stock Reduced', `Item: ${item.name}, Quantity: ${item.quantity}, New Total: ${inv.quantity}`);
                     }
                 } else {
                     saleData.id = 'temp_' + Date.now();
@@ -1420,6 +1445,7 @@
                     for (let item of items) {
                         const inv = inventory.find(i => i.id === item.id);
                         inv.quantity -= item.quantity;
+                        addLog('Stock Reduced', `Item: ${item.name}, Quantity: ${item.quantity}, New Total: ${inv.quantity}`);
                     }
                     saveLocal('sales', sales);
                     saveLocal('inventory', inventory);
