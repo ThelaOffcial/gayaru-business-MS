@@ -352,7 +352,7 @@
             margin-bottom: 30px;
         }
 
-        #weeklyChart {
+        #weeklyChart, #paymentChart, #topProductsChart, #salesTrendChart {
             width: 100%;
             height: 250px;
         }
@@ -699,15 +699,17 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Salesman</th>
                                 <th>Items</th>
                                 <th>Payment</th>
                                 <th>Total (Rs.)</th>
+                                <th>Timestamp</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="salesTableBody">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px;">No sales records</td>
+                                <td colspan="7" style="text-align: center; padding: 40px;">No sales records</td>
                             </tr>
                         </tbody>
                     </table>
@@ -769,6 +771,7 @@
                     <h2>Monthly Sales Summary</h2>
                     <div style="display: flex; gap: 10px;">
                         <input type="month" id="monthlyDate" class="filter-select">
+                        <input type="text" id="monthlySalesman" placeholder="Search by salesman" class="filter-select">
                         <button class="btn btn-primary" onclick="generateMonthlySummary()">Generate</button>
                     </div>
                 </div>
@@ -787,6 +790,10 @@
                         <div class="form-group">
                             <label>To Date</label>
                             <input type="date" id="reportToDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Salesman</label>
+                            <input type="text" id="reportSalesman" placeholder="Search by salesman">
                         </div>
                         <button class="btn btn-primary" onclick="generateReport()">Generate</button>
                     </div>
@@ -865,6 +872,10 @@
                 <div class="form-group">
                     <label>Date</label>
                     <input type="date" id="saleDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Salesman</label>
+                    <input type="text" id="salesman" required>
                 </div>
                 <div class="form-group">
                     <label>Payment Method</label>
@@ -1424,6 +1435,7 @@
             
             const saleData = {
                 date: document.getElementById('saleDate').value,
+                salesman: document.getElementById('salesman').value,
                 paymentMethod: document.getElementById('paymentMethod').value,
                 items,
                 total: grandTotal,
@@ -1479,24 +1491,39 @@
         function renderSalesTable(data = sales) {
             const tbody = document.getElementById('salesTableBody');
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">No sales</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">No sales records</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = data.map(s => `
-                <tr>
-                    <td>${s.date}</td>
-                    <td>${s.items.length} item(s)</td>
-                    <td style="text-transform: capitalize;">${s.paymentMethod}</td>
-                    <td><strong>Rs. ${s.total.toFixed(2)}</strong></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="viewSale('${s.id}')">View</button>
-                            <button class="btn btn-danger" onclick="deleteSale('${s.id}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = data.map(s => {
+                let timestamp;
+                if (s.timestamp && s.timestamp.seconds) {
+                    // Firestore timestamp
+                    timestamp = new Date(s.timestamp.seconds * 1000);
+                } else if (s.timestamp instanceof Date) {
+                    // Local Date object
+                    timestamp = s.timestamp;
+                } else {
+                    // Fallback
+                    timestamp = new Date(s.timestamp);
+                }
+                return `
+                    <tr>
+                        <td>${s.date}</td>
+                        <td>${s.salesman || 'N/A'}</td>
+                        <td>${s.items.length} item(s)</td>
+                        <td style="text-transform: capitalize;">${s.paymentMethod}</td>
+                        <td><strong>Rs. ${s.total.toFixed(2)}</strong></td>
+                        <td>${timestamp.toLocaleString()}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" style="padding: 8px 12px; font-size: 14px;" onclick="viewSale('${s.id}')">View</button>
+                                <button class="btn btn-danger" onclick="deleteSale('${s.id}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function viewSale(id) {
@@ -1753,7 +1780,11 @@
         // Monthly Summary
         function generateMonthlySummary() {
             const month = document.getElementById('monthlyDate').value;
-            const monthSales = sales.filter(s => s.date.startsWith(month));
+            const salesman = document.getElementById('monthlySalesman').value.toLowerCase();
+            let monthSales = sales.filter(s => s.date.startsWith(month));
+            if (salesman) {
+                monthSales = monthSales.filter(s => s.salesman && s.salesman.toLowerCase().includes(salesman));
+            }
             const total = monthSales.reduce((sum, s) => sum + s.total, 0);
             const items = monthSales.reduce((sum, s) => sum + s.items.reduce((i, it) => i + it.quantity, 0), 0);
             
@@ -1854,7 +1885,11 @@
         function generateReport() {
             const from = document.getElementById('reportFromDate').value;
             const to = document.getElementById('reportToDate').value;
-            const filtered = sales.filter(s => s.date >= from && s.date <= to);
+            const salesman = document.getElementById('reportSalesman').value.toLowerCase();
+            let filtered = sales.filter(s => s.date >= from && s.date <= to);
+            if (salesman) {
+                filtered = filtered.filter(s => s.salesman && s.salesman.toLowerCase().includes(salesman));
+            }
             
             const total = filtered.reduce((sum, s) => sum + s.total, 0);
             const cash = filtered.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0);
@@ -1874,42 +1909,75 @@
             const dates = Object.keys(dateMap).sort();
             const values = dates.map(d => dateMap[d]);
             const labels = dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
+
             if (salesTrendChart) salesTrendChart.destroy();
-            salesTrendChart = new Chart(document.getElementById('salesTrendChart'), {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{ label: 'Sales (Rs.)', data: values, backgroundColor: '#667eea' }]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
+            if (dates.length === 0) {
+                salesTrendChart = new Chart(document.getElementById('salesTrendChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Sales'],
+                        datasets: [{ label: 'Sales (Rs.)', data: [0], backgroundColor: '#ccc' }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+            } else {
+                salesTrendChart = new Chart(document.getElementById('salesTrendChart'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Sales (Rs.)', data: values, backgroundColor: '#667eea' }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+            }
             
             // Payment Chart
             if (paymentChart) paymentChart.destroy();
-            paymentChart = new Chart(document.getElementById('paymentChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Cash', 'Cheque', 'Credit'],
-                    datasets: [{ data: [cash, cheque, credit], backgroundColor: ['#43e97b', '#f5576c', '#4facfe'] }]
-                },
-                options: { responsive: true }
-            });
+            if (cash === 0 && cheque === 0 && credit === 0) {
+                paymentChart = new Chart(document.getElementById('paymentChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['No Transactions'],
+                        datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
+                    },
+                    options: { responsive: true }
+                });
+            } else {
+                paymentChart = new Chart(document.getElementById('paymentChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Cash', 'Cheque', 'Credit'],
+                        datasets: [{ data: [cash, cheque, credit], backgroundColor: ['#43e97b', '#f5576c', '#4facfe'] }]
+                    },
+                    options: { responsive: true }
+                });
+            }
             
             // Top Products Chart
             const products = {};
             filtered.forEach(s => s.items.forEach(i => products[i.name] = (products[i.name] || 0) + i.quantity));
             const top = Object.entries(products).sort((a, b) => b[1] - a[1]).slice(0, 10);
-            
+
             if (topProductsChart) topProductsChart.destroy();
-            topProductsChart = new Chart(document.getElementById('topProductsChart'), {
-                type: 'Bar',
-                data: {
-                    labels: top.map(p => p[0]),
-                    datasets: [{ label: 'Quantity', data: top.map(p => p[1]), backgroundColor: '#764ba2' }]
-                },
-                options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
-            });
+            if (top.length === 0) {
+                topProductsChart = new Chart(document.getElementById('topProductsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Products'],
+                        datasets: [{ label: 'Quantity', data: [0], backgroundColor: '#ccc' }]
+                    },
+                    options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+                });
+            } else {
+                topProductsChart = new Chart(document.getElementById('topProductsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: top.map(p => p[0]),
+                        datasets: [{ label: 'Quantity', data: top.map(p => p[1]), backgroundColor: '#764ba2' }]
+                    },
+                    options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+                });
+            }
         }
 
         // Tab Switching
